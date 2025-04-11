@@ -280,27 +280,27 @@
 
 	wf_0 {
 		qcom,wf-vmax-mv = <3100>;
-
+		/delete-property/ qcom,lra-auto-resonance-disable;
 	};
 	wf_1 {
 		qcom,wf-vmax-mv = <3100>;
-
+		/delete-property/ qcom,lra-auto-resonance-disable;
 	};
 	wf_2 {
 		qcom,wf-vmax-mv = <3100>;
-
+		/delete-property/ qcom,lra-auto-resonance-disable;
 	};
 	wf_3 {
 		qcom,wf-vmax-mv = <3100>;
-
+		/delete-property/ qcom,lra-auto-resonance-disable;
 	};
 	wf_4 {
 		qcom,wf-vmax-mv = <3100>;
-
+		/delete-property/ qcom,lra-auto-resonance-disable;
 	};
 	wf_5 {
 		qcom,wf-vmax-mv = <3100>;
-
+		/delete-property/ qcom,lra-auto-resonance-disable;
 	};
 };
 
