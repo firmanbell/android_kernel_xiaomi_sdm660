@@ -170,8 +170,8 @@ return:
 int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
 {
 	struct i2c_msg msgs[2];
-	int32_t ret;
-	int32_t retries;
+	int32_t ret = -1;
+	int32_t retries = 0;
 	msgs[0].flags = !I2C_M_RD;
 	msgs[0].addr  = address;
 	msgs[0].len   = 1;
@@ -181,14 +181,23 @@ int32_t CTP_I2C_READ(struct i2c_client *client, uint16_t address, uint8_t *buf, 
 	msgs[1].len   = len - 1;
 	msgs[1].buf   = &buf[1];
 
-	for (retries = 0; retries < 5; retries++) {
+	while (retries < 5) {
 		ret = i2c_transfer(client->adapter, msgs, 2);
-		if (likely(ret == 2))
-			return ret;
+
+		if (ret == 2)
+			break;
+
+		retries++;
+		msleep(20);
+		NVT_ERR("error, retry=%d\n", retries);
 	}
 
-	NVT_ERR("i2c read error\n");
-	return -EIO;
+	if (unlikely(retries == 5)) {
+		NVT_ERR("error, ret=%d\n", ret);
+		ret = -EIO;
+	}
+
+	return ret;
 }
 
 /*******************************************************
@@ -201,21 +210,30 @@ return:
 int32_t CTP_I2C_WRITE(struct i2c_client *client, uint16_t address, uint8_t *buf, uint16_t len)
 {
 	struct i2c_msg msg;
-	int32_t ret;
-	int32_t retries;
+	int32_t ret = -1;
+	int32_t retries = 0;
 	msg.flags = !I2C_M_RD;
 	msg.addr  = address;
 	msg.len   = len;
 	msg.buf   = buf;
 
-	for (retries = 0; retries < 5; retries++) {
+	while (retries < 5) {
 		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (likely(ret == 1))
-			return ret;
+
+		if (ret == 1)
+			break;
+
+		retries++;
+		msleep(20);
+		NVT_ERR("error, retry=%d\n", retries);
 	}
 
-	NVT_ERR("i2c write error\n");
-	return -EIO;
+	if (unlikely(retries == 5)) {
+		NVT_ERR("error, ret=%d\n", ret);
+		ret = -EIO;
+	}
+
+	return ret;
 }
 
 
