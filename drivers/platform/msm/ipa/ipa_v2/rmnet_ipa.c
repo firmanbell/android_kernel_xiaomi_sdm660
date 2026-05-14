@@ -1058,17 +1058,17 @@ static int ipa_wwan_change_mtu(struct net_device *dev, int new_mtu)
  * @dev: network device
  *
  * Return codes:
- * 0: success
+ * NETDEV_TX_OK: success
  * NETDEV_TX_BUSY: Error while transmitting the skb. Try again
  * later
- * -EFAULT: Error while transmitting the skb
  */
-static int ipa_wwan_xmit(struct sk_buff *skb, struct net_device *dev)
+static netdev_tx_t ipa_wwan_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	int ret = 0;
+	netdev_tx_t ret = NETDEV_TX_OK;
 	bool qmap_check;
 	struct wwan_private *wwan_ptr = netdev_priv(dev);
 	struct ipa_tx_meta meta;
+	int rc;
 
 	if (skb->protocol != htons(ETH_P_MAP)) {
 		IPAWANDBG_LOW
@@ -1109,18 +1109,18 @@ static int ipa_wwan_xmit(struct sk_buff *skb, struct net_device *dev)
 
 send:
 	/* IPA_RM checking start */
-	ret = ipa_rm_inactivity_timer_request_resource(
+	rc = ipa_rm_inactivity_timer_request_resource(
 		IPA_RM_RESOURCE_WWAN_0_PROD);
-	if (ret == -EINPROGRESS) {
+	if (rc == -EINPROGRESS) {
 		netif_stop_queue(dev);
 		return NETDEV_TX_BUSY;
 	}
-	if (ret) {
+	if (rc) {
 		pr_err("[%s] fatal: ipa rm timer request resource failed %d\n",
-		       dev->name, ret);
+		       dev->name, rc);
 		dev_kfree_skb_any(skb);
 		dev->stats.tx_dropped++;
-		return -EFAULT;
+		return NETDEV_TX_OK;
 	}
 	/* IPA_RM checking end */
 
@@ -1128,12 +1128,12 @@ send:
 		memset(&meta, 0, sizeof(meta));
 		meta.pkt_init_dst_ep_valid = true;
 		meta.pkt_init_dst_ep_remote = true;
-		ret = ipa2_tx_dp(IPA_CLIENT_Q6_LAN_CONS, skb, &meta);
+		rc = ipa2_tx_dp(IPA_CLIENT_Q6_LAN_CONS, skb, &meta);
 	} else {
-		ret = ipa2_tx_dp(IPA_CLIENT_APPS_LAN_WAN_PROD, skb, NULL);
+		rc = ipa2_tx_dp(IPA_CLIENT_APPS_LAN_WAN_PROD, skb, NULL);
 	}
 
-	if (ret) {
+	if (rc) {
 		ret = NETDEV_TX_BUSY;
 		goto out;
 	}
